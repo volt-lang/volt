@@ -1,5 +1,6 @@
 
-use mem;
+use mem
+use utils
 
 - struct StringConst {
     v1: u8 (0)
@@ -53,8 +54,8 @@ class String {
     /////////////////////
 
     fn trim(part: String) String {
-        let res = this.ltrim(part);
-        return res.rtrim(part);
+        let res = this.ltrim(part)
+        return res.rtrim(part)
     }
 
     fn rtrim(part: String) String {
@@ -111,21 +112,95 @@ class String {
 
     fn sub_str_bytes(byte_start_index: uint, byte_length: uint) String {
 
-        let this_bytes = this.bytes;
+        let this_bytes = this.bytes
         if(byte_start_index > this_bytes){
-            return "";
+            return ""
         }
         if((byte_start_index + byte_length) > this_bytes){
-            byte_length = this_bytes - byte_start_index;
+            byte_length = this_bytes - byte_start_index
         }
         if(byte_length == 0){
-            return "";
+            return ""
         }
-        let from = this.data + byte_start_index;
-        let res = String.make_empty(byte_length);
-        mem:copy(from, res.data, byte_length);
-        return res;
+        let from = this.data + byte_start_index
+        let res = String.make_empty(byte_length)
+        mem:copy(from, res.data, byte_length)
+        return res
     }
+
+	fn split(on: String) Array[String] {
+		let result = Array[String].new()
+
+		let pos : uint = 0
+		let adr = this.data
+		let adr_on = on.data
+		let bytes = this.bytes
+		let bytes_left = bytes
+		let bytes_on = on.bytes
+
+		let part = utils:ByteBuffer.new(100)
+		while pos < bytes {
+			if(bytes_on > bytes_left){
+				break
+			}
+			let i : uint = 0
+			let tmp_adr1 = adr
+			let tmp_adr2 = adr_on
+			while(i < bytes_on){
+				let byte1 : u8 = @ptrv(tmp_adr1, u8, 0)
+				let byte2 : u8 = @ptrv(tmp_adr2, u8, 0)
+				if(byte1 != byte2) {
+					break
+				}
+				i++
+				tmp_adr1+=1
+				tmp_adr2+=1
+			}
+			if(i == bytes_on){
+				result.push(part.to_string())
+				part.clear()
+				pos += bytes_on
+				adr += bytes_on
+				bytes_left -= bytes_on
+				continue
+			}
+
+			let bytec : u8 = 1
+			let byte : u8 = @ptrv(adr, u8, 0)
+			if(byte > 127){
+				byte = byte << 1
+				while(byte > 127){
+					bytec++
+					byte = byte << 1
+				}
+			}
+			if(bytec > 4){
+				// Invalid utf8 char
+				bytec = 1
+			}
+			if(bytec > bytes_left){
+				break
+			}
+			pos += bytec
+			bytes_left -= bytec
+			while(bytec > 0){
+				let byte : u8 = @ptrv(adr, u8, 0)
+				part.append_byte(byte)
+				bytec--
+				adr+=1
+			}
+		}
+		while bytes_left > 0 {
+			let byte : u8 = @ptrv(adr, u8, 0)
+			part.append_byte(byte)
+			bytes_left--
+			adr+=1
+		}
+
+		result.push(part.to_string())
+
+		return result
+	}
 
     /////////////////////
     // Create
@@ -150,7 +225,7 @@ class String {
     // TODO: mark unsafe
     static fn make_from_ptr(data: ptr, length: uint) String {
         if length == 0 : return ""
-        let s = String.make_empty(length);
+        let s = String.make_empty(length)
         mem:copy(data, s.data, length)
         return s
     }
@@ -164,7 +239,7 @@ class String {
         let add_len = add.bytes
         let len = this_len + add_len
         let s = CLASS.make_empty(len)
-        let data = s.data;
+        let data = s.data
         mem:copy(this.data, data, this_len)
         mem:copy(add.data, @ptr_offset(data, this_len), add_len + 1) // + 1 for 0 byte
         return s

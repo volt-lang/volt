@@ -6,7 +6,7 @@ use valk:mem;
 
 struct ThreadEntry {
     func: ptr
-    data: ptr
+    data: ?ptr
     has_data: bool
 }
 
@@ -16,7 +16,7 @@ struct Thread {
         mem:Stack.init()
         if e.has_data {
             let func = e.func @as fn(ptr)(void);
-            func(e.data);
+            func(e.data @as ptr);
         } else {
             let func = e.func @as fn()(void);
             func();
@@ -27,12 +27,12 @@ struct Thread {
     static fn start(start_func: ptr) {
         CLASS.init(start_func, null, false);
     }
-    static fn start_with_data(start_func: ptr, data: ptr) {
+    static fn start_with_data(start_func: ptr, data: ?ptr) {
         @gc_share(data)
         CLASS.init(start_func, data, true);
     }
 
-    static fn init(start_func: ptr, data: ptr, has_data: bool) {
+    static fn init(start_func: ptr, data: ?ptr, has_data: bool) {
 
         let e = ThreadEntry {
             func: start_func

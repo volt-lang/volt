@@ -184,6 +184,7 @@ Type* type_gen_null(Allocator* alc, Build* b) {
     Type* t = type_make(alc, type_null);
     t->is_pointer = true;
     t->size = b->ptr_size;
+    t->nullable = true;
     return t;
 }
 Type* type_gen_class(Allocator* alc, Class* class) {
@@ -362,25 +363,25 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
         strcat(res, use_export_name ? "NULL_" : "?");
     }
     if (t->type == type_func) {
-        strcat(res, "fn(");
+        strcat(res, use_export_name ? "fn_" : "fn(");
         Array * types = t->func_args;
         for(int i = 0; i < types->length; i++) {
             if(i > 0) {
-                strcat(res, ", ");
+                strcat(res, use_export_name ? "_" : ", ");
             }
             Type* sub = array_get_index(types, i);
             type_to_str_append(sub, res, use_export_name);
         }
-        strcat(res, ")(");
+        strcat(res, use_export_name ? "__" : ")(");
         types = t->func_rett_types;
         for(int i = 0; i < types->length; i++) {
             if(i > 0) {
-                strcat(res, ", ");
+                strcat(res, use_export_name ? "_" : ", ");
             }
             Type* sub = array_get_index(types, i);
             type_to_str_append(sub, res, use_export_name);
         }
-        strcat(res, ")");
+        strcat(res, use_export_name ? "_" : ")");
     } else if (t->class) {
         Class *class = t->class;
         strcat(res, use_export_name ? class->ir_name : class->name);

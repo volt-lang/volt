@@ -4,9 +4,9 @@ value bump_block_size (100000)
 global bumper_usage : uint
 
 struct GcBumper {
-    - first : ptr (null)
-    - base : ptr (null)
-    - adr : ptr (null)
+    - first : ptr (null @as ptr)
+    - base : ptr (null @as ptr)
+    - adr : ptr (null @as ptr)
     - block_count : uint (0)
     - block_total : uint (0)
     - block_total_last : uint (1)
@@ -21,7 +21,7 @@ struct GcBumper {
     fn create_new_block() {
         let block = alloc(bump_block_size)
         // Set next null
-        @ptrv(block, ptr) = null
+        @ptrv(block, ?ptr) = null
         if this.base != null {
             // Set next in previous block
             @ptrv(this.base, ptr) = block

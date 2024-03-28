@@ -17,7 +17,7 @@ struct ObjectChain {
 
     static fn new_olist() ptr {
         let list = alloc((chain_size + 1) * sizeof(ptr))
-        @ptrv(list, ptr, chain_size) = null
+        @ptrv(list, ?ptr, chain_size) = null
         return list
     }
 

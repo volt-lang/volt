@@ -56,7 +56,7 @@ class Array[T] {
         let data = this.data
         let size = this.size
         let new_size = size * 2
-        let new_data : ptr = null
+        let new_data : ptr = null @as ptr
 
         new_data = mem:alloc(new_size * sizeof(T));
         mem:copy(data, new_data, size * sizeof(T));

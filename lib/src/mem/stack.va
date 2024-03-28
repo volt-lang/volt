@@ -71,7 +71,7 @@ struct Stack {
         let stackc = stack_size / sizeof(ptr)
         while stackc > 0 {
             stackc--
-            @ptrv(data, ptr, stackc) = null
+            @ptrv(data, ?ptr, stackc) = null
         }
 
         let s = Stack {

@@ -706,6 +706,13 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             }
             Value* errv = read_value(alc, p, false, 0);
             errv = try_convert(alc, b, p->scope, errv, fcall->rett);
+            // Mix nullable
+            if(fcall->rett->is_pointer && errv->rett->nullable) {
+                Type* t = type_clone(alc, fcall->rett);
+                t->nullable = true;
+                fcall->rett = t;
+            }
+            //
             type_check(p, fcall->rett, errv->rett);
             f->err_value = errv;
         }

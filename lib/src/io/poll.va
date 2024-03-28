@@ -22,7 +22,7 @@ class Poll[T] {
         let poll = CLASS {
             epoll_fd: fd
             epoll_buffer: mem:alloc(40 * sizeof(inline sys:libc_epoll_event))
-            lsn_by_index: null
+            lsn_by_index: null @as ptr
         }
         #else
         let poll = CLASS {
