@@ -13,6 +13,12 @@ Str *str_make(Allocator *alc, int mem_size) {
     return result;
 }
 
+char* str_get_fake_chars(Str* str) {
+    char* res = str->data;
+    res[str->length] = 0;
+    return res;
+}
+
 void str_append(Str *str, Str *add) {
     if (add->length == 0) {
         return;

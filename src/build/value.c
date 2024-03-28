@@ -200,6 +200,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Value* result = value_handle_idf(alc, p, idf);
             // 
             Func* test_assert = get_valk_func(b, "core", "test_assert");
+            func_mark_used(p->func, test_assert);
             Array* args = array_make(alc, 2);
             array_push(args, val);
             array_push(args, result);
@@ -294,6 +295,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 if (!func) {
                     parse_err(p, -1, "Class '%s' has no property/function named: '%s'", class->name, prop_name);
                 }
+                func_mark_used(p->func, func);
                 value_check_act(func->act, class->fc, p, "function");
                 if(func->is_static) {
                     parse_err(p, -1, "Accessing a static class in a non-static way: '%s.%s'\n", class->name, prop_name);
@@ -515,6 +517,9 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_global) {
         Global* g = idf->item;
+        if(g->type->class && p->func) {
+            array_push(p->func->used_classes, g->type->class);
+        }
         value_check_act(g->act, g->fc, p, "global");
         return value_make(alc, v_global, g, g->type);
     }
@@ -530,11 +535,14 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_func) {
         Func* func = idf->item;
+        func_mark_used(p->func, func);
         value_check_act(func->act, func->fc, p, "function");
         return vgen_func_ptr(alc, func, NULL);
     }
     if (type == idf_class) {
         Class* class = idf->item;
+        if(p->func)
+            array_push(p->func->used_classes, class);
         value_check_act(class->act, class->fc, p, "class");
         return value_handle_class(alc, p, class);
     }
@@ -600,7 +608,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             }
 
             Value *arg = read_value(alc, p, true, 0);
-            arg = try_convert(alc, b, p->scope, arg, arg_type);
+            arg = try_convert(alc, p, p->scope, arg, arg_type);
 
             char t = tok(p, true, true, true);
             if (t == tok_at_word && str_is(p->tkn, "@autocast")) {
@@ -642,7 +650,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             p->scope = default_value_ch->fc->scope;
             //
             Value* arg = read_value(b->alc, p, true, 0);
-            arg = try_convert(alc, b, scope, arg, arg_type);
+            arg = try_convert(alc, p, scope, arg, arg_type);
             type_check(p, arg_type, arg->rett);
             //
             p->scope = scope;
@@ -705,7 +713,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
                 parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
             }
             Value* errv = read_value(alc, p, false, 0);
-            errv = try_convert(alc, b, p->scope, errv, fcall->rett);
+            errv = try_convert(alc, p, p->scope, errv, fcall->rett);
             type_check(p, fcall->rett, errv->rett);
             f->err_value = errv;
         }
@@ -746,6 +754,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         t = tok(p, false, false, true);
         char* name = p->tkn;
         Func* func = map_get(class->funcs, name);
+        func_mark_used(p->func, func);
         if(!func) {
             parse_err(p, -1, "Class '%s' has no function named: '%s'", class->name, name);
         }
@@ -772,7 +781,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         }
         tok_expect(p, ":", true, false);
         Value* val = read_value(alc, p, true, 0);
-        val = try_convert(alc, b, p->scope, val, prop->type);
+        val = try_convert(alc, p, p->scope, val, prop->type);
         type_check(p, prop->type, val->rett);
         map_set_force_new(values, name, val);
         t = tok(p, true, true, true);
@@ -847,10 +856,10 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
         if (!lt->nullable && !rt->nullable) {
             if (lt->class == str_class || rt->class == str_class) {
                 if (lt->class != str_class) {
-                    left = try_convert(alc, b, p->scope, left, rt);
+                    left = try_convert(alc, p, p->scope, left, rt);
                     lt = left->rett;
                 } else {
-                    right = try_convert(alc, b, p->scope, right, lt);
+                    right = try_convert(alc, p, p->scope, right, lt);
                     rt = right->rett;
                 }
             }
@@ -861,8 +870,9 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     if (op == op_add && !lt->nullable) {
         Func *add = lt->class ? map_get(lt->class->funcs, "_add") : NULL;
         if (add && add->is_static == false && add->arg_types->length == 2) {
+            func_mark_used(p->func, add);
             Type *arg_type = array_get_index(add->arg_types, 1);
-            right = try_convert(alc, b, p->scope, right, arg_type);
+            right = try_convert(alc, p, p->scope, right, arg_type);
             Array *args = array_make(alc, 2);
             array_push(args, left);
             array_push(args, right);
@@ -976,6 +986,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
     if (op == op_eq && !lt->nullable) {
         Func *eq = lt->class ? map_get(lt->class->funcs, "_eq") : NULL;
         if (eq && eq->is_static == false && eq->arg_types->length == 2) {
+            func_mark_used(p->func, eq);
             Type *arg_type = array_get_index(eq->arg_types, 1);
             Array *args = array_make(alc, 2);
             array_push(args, left);
@@ -1056,7 +1067,8 @@ void value_is_mutable(Value* v) {
     }
 }
 
-Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* type) {
+Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* type) {
+    Build* b = p->b;
 
     Class* str_class = get_valk_class(b, "type", "String");
     Class* from_class = val->rett->class;
@@ -1064,6 +1076,7 @@ Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* typ
         // To string
         Func *to_str = map_get(from_class->funcs, "_string");
         if (to_str) {
+            func_mark_used(p->func, to_str);
             Array *args = array_make(alc, 2);
             array_push(args, val);
             Value *on = vgen_func_ptr(alc, to_str, NULL);

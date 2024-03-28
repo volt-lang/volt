@@ -133,5 +133,9 @@ struct IRPhiValue {
     IRBlock* block;
     char* value;
 };
+struct IRFuncIR {
+    Func* func;
+    char* ir;
+};
 
 #endif

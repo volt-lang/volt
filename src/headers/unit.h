@@ -17,6 +17,10 @@ struct Unit {
     char *hash;
     char *unique_hash;
     //
+    char *ir_start;
+    char *ir_end;
+    Array *func_irs;
+    //
     Parser *parser;
     //
     Array *funcs;

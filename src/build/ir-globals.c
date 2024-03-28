@@ -1,34 +1,19 @@
 
 #include "../all.h"
 
-char* ir_gc_vtable_func_name(IR* ir, Func* func, char* buf);
-
 void ir_gen_globals(IR* ir) {
     //
     Unit *u = ir->unit;
     Build *b = ir->b;
     Str *code = ir->code_global;
 
-    bool is_main_fc = u->is_main;
-
-    if (is_main_fc) {
+    if (u->is_main) {
         str_preserve(code, 500);
         str_flat(code, "@valk_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
         str_flat(code, "@valk_err_msg = dso_local thread_local(initialexec) global i8* null, align 8\n");
 
-        // VTables
-        int gc_vtables = b->gc_vtables;
-        char gc_vt_count[20];
-        itos((gc_vtables + 1) * 5, gc_vt_count, 10);
-        char gc_vt_name_buf[256];
+        // Define vtable functions
         Array* classes = b->classes;
-
-        // Gen vtable
-        str_preserve(code, 500);
-        str_flat(code, "@valk_gc_vtable = unnamed_addr constant [");
-        str_add(code, gc_vt_count);
-        str_flat(code, " x ptr] [\n");
-        str_flat(code, "ptr null, ptr null, ptr null, ptr null, ptr null"); // vtable start from index 1
         for(int i = 0; i < classes->length; i++) {
             Class* class = array_get_index(classes, i);
             if(class->type != ct_class)
@@ -40,20 +25,12 @@ void ir_gen_globals(IR* ir) {
             Func* share = map_get(class->funcs, "_v_share");
             Func* gc_free = map_get(class->funcs, "_gc_free");
 
-            str_preserve(code, 500);
-            str_flat(code, ",\n");
-            str_flat(code, "ptr ");
-            str_add(code, ir_gc_vtable_func_name(ir, transfer, gc_vt_name_buf));
-            str_flat(code, ", ptr ");
-            str_add(code, ir_gc_vtable_func_name(ir, mark, gc_vt_name_buf));
-            str_flat(code, ", ptr ");
-            str_add(code, ir_gc_vtable_func_name(ir, mark_shared, gc_vt_name_buf));
-            str_flat(code, ", ptr ");
-            str_add(code, ir_gc_vtable_func_name(ir, share, gc_vt_name_buf));
-            str_flat(code, ", ptr ");
-            str_add(code, ir_gc_vtable_func_name(ir, gc_free, gc_vt_name_buf));
+            ir_define_ext_func(ir, transfer);
+            ir_define_ext_func(ir, mark);
+            ir_define_ext_func(ir, mark_shared);
+            ir_define_ext_func(ir, share);
+            ir_define_ext_func(ir, gc_free);
         }
-        str_flat(code, "\n], align 8\n");
     } else {
         str_preserve(code, 500);
         str_flat(code, "@valk_err_code = external thread_local(initialexec) global i32, align 4\n");
@@ -95,16 +72,6 @@ void ir_gen_globals(IR* ir) {
 
         array_push(ir->declared_globals, g);
     }
-}
-
-char* ir_gc_vtable_func_name(IR* ir, Func* func, char* buf) {
-    if(!func)
-        return "null";
-    ir_define_ext_func(ir, func);
-    buf[0] = '@';
-    buf[1] = '\0';
-    strcat(buf, func->export_name);
-    return buf;
 }
 
 void *ir_global(IR *ir, Global *g) {

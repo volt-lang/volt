@@ -35,6 +35,7 @@ void stage_3_gen(Build* b);
 void stage_4_ast(Unit *u);
 void stage_4_ir(Unit *u);
 void stage_4_ast_main(Unit *u);
+void stage_5_ir_final(Build* b);
 void stage_5_objects(Build *b);
 void stage_6_link(Build* b, Array* o_files);
 // Sub stages

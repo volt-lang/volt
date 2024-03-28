@@ -6,6 +6,7 @@
 
 Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export_name);
 FuncArg* func_arg_make(Allocator* alc, Type* type);
+void func_mark_used(Func* func, Func* uses_func);
 void parse_handle_func_args(Parser* p, Func* func);
 void func_generate_args(Allocator* alc, Func* func, Map* args);
 void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_count_min, int arg_count_max);
@@ -36,6 +37,8 @@ struct Func {
     Class* class;
     Array* cached_values;
     Map* errors;
+    Array* used_functions;
+    Array* used_classes;
     //
     int act;
     //
@@ -47,6 +50,8 @@ struct Func {
     bool has_rett;
     bool multi_rett;
     bool is_test;
+    bool is_used;
+    bool use_if_class_is_used;
 };
 struct FuncArg {
     Type* type;

@@ -51,6 +51,7 @@ void validate_class(Parser *p, Class* class) {
 
     Func *gc_free = map_get(funcs, "_gc_free");
     if (gc_free) {
+        gc_free->use_if_class_is_used = true;
         func_validate_arg_count(p, gc_free, false, 1, 1);
         func_validate_rett_void(p, gc_free);
     }

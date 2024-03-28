@@ -28,6 +28,10 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->unique_hash = dups(alc, uh);
     u->hash = NULL;
     //
+    u->func_irs = array_make(alc, 50);
+    u->ir_start = NULL;
+    u->ir_end = NULL;
+    //
     u->parser = parser_make(alc, u);
     //
     u->funcs = array_make(alc, 50);

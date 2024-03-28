@@ -267,6 +267,7 @@ int cmd_build(int argc, char *argv[]) {
     // Object files + Linking
     alc_delete(b->alc_ast);
     size_t mem_after_parse = get_mem_usage();
+    stage_5_ir_final(b);
     stage_5_objects(b);
 
     // Finish build

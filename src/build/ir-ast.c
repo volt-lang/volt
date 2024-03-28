@@ -261,6 +261,8 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
     // Link
     ir->block = block_link;
     Func *func = get_valk_class_func(b, "mem", "Stack", "link");
+    func_mark_used(ir->func->func, func);
+
     Value *fptr = vgen_func_ptr(ir->alc, func, NULL);
     //
     Array* types = array_make(ir->alc, 2);

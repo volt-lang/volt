@@ -51,18 +51,18 @@ Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scop
     if (idf_scope)
         sub->idf_parent = idf_scope;
 
-    Parser* p2 = pool_get_parser(p->unit);
+    parser_new_context(&p);
 
-    *p2->chunk = *chunk;
-    p2->scope = sub;
-    Value *val = read_value(alc, p2, true, 0);
+    *p->chunk = *chunk;
+    p->scope = sub;
+    Value *val = read_value(alc, p, true, 0);
 
     if (check_type) {
-        val = try_convert(alc, p->b, p->scope, val, check_type);
+        val = try_convert(alc, p, p->scope, val, check_type);
         type_check(p, check_type, val->rett);
     }
 
-    pool_return_parser(p->unit, p2);
+    parser_pop_context(&p);
 
     return val;
 }

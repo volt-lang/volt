@@ -30,6 +30,7 @@ typedef struct IR IR;
 typedef struct IRFunc IRFunc;
 typedef struct IRBlock IRBlock;
 typedef struct IRPhiValue IRPhiValue;
+typedef struct IRFuncIR IRFuncIR;
 // Parse
 typedef struct Func Func;
 typedef struct FuncArg FuncArg;

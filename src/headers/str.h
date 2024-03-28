@@ -12,6 +12,7 @@ struct Str {
 };
 
 Str *str_make(Allocator *alc, int mem_size);
+char* str_get_fake_chars(Str* str);
 void str_append(Str *, Str *);
 void str_append_char(Str *, char);
 void str_append_chars(Str *, char *);

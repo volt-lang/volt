@@ -146,7 +146,7 @@ void read_ast(Parser *p, bool single_line) {
                         }
                     }
                     if (i == 0) {
-                        val = try_convert(alc, b, scope, val, type);
+                        val = try_convert(alc, p, scope, val, type);
                         type_check(p, type, val->rett);
                     } else {
                         type_check(p, type, array_get_index(fcall_rett_types, i));
@@ -192,7 +192,7 @@ void read_ast(Parser *p, bool single_line) {
                     Array *values = p->vscope_values;
                     Type *type = vscope_get_result_type(values);
                     if(type) {
-                        val = try_convert(alc, b, scope, val, type);
+                        val = try_convert(alc, p, scope, val, type);
                         type_check(p, type, val->rett);
                     }
                     array_push(values, val);
@@ -208,7 +208,7 @@ void read_ast(Parser *p, bool single_line) {
                 // Main return value
                 if(!type_is_void(func->rett)) {
                     val = read_value(alc, p, false, 0);
-                    val = try_convert(alc, b, p->scope, val, func->rett);
+                    val = try_convert(alc, p, p->scope, val, func->rett);
                     type_check(p, func->rett, val->rett);
                 } else {
                     char t = tok(p, true, false, true);
@@ -235,7 +235,7 @@ void read_ast(Parser *p, bool single_line) {
                         tok_expect(p, ",", true, true);
                         Type* type = array_get_index(func->rett_types, i);
                         Value* val = read_value(alc, p, true, 0);
-                        val = try_convert(alc, b, p->scope, val, type);
+                        val = try_convert(alc, p, p->scope, val, type);
                         type_check(p, type, val->rett);
                         // Store
                         TSetRetv* sr = al(alc, sizeof(TSetRetv));
@@ -278,6 +278,7 @@ void read_ast(Parser *p, bool single_line) {
                 if(!func) {
                     parse_err(p, -1, "Cannot use 'each' on this value. The class of it's type does not contain an '_each' method");
                 }
+                func_mark_used(p->func, func);
 
                 tok_expect(p, "as", true, true);
                 t = tok(p, true, false, true);
@@ -373,6 +374,7 @@ void read_ast(Parser *p, bool single_line) {
                 tok_expect(p, ")", true, true);
 
                 Func *share = get_valk_func(b, "mem", "gc_share");
+                func_mark_used(p->func, share);
                 Array* args = array_make(alc, 2);
                 array_push(args, v);
                 Value *on = vgen_func_ptr(alc, share, NULL);
@@ -430,7 +432,7 @@ void read_ast(Parser *p, bool single_line) {
                 right = value_handle_op(alc, p, left, right, op);
             }
 
-            right = try_convert(alc, b, p->scope, right, left->rett);
+            right = try_convert(alc, p, p->scope, right, left->rett);
             type_check(p, left->rett, right->rett);
 
             if(op == op_eq && left->type == v_global) {
@@ -485,7 +487,7 @@ void read_ast(Parser *p, bool single_line) {
                 Type *type = v->rett;
 
                 if (i == 0) {
-                    val = try_convert(alc, b, scope, val, type);
+                    val = try_convert(alc, p, scope, val, type);
                     type_check(p, type, val->rett);
                 } else {
                     type_check(p, type, array_get_index(fcall_rett_types, i));

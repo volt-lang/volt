@@ -155,6 +155,7 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         Func *transfer = func_make(b->alc, class->unit, class->scope, name, export_name);
         transfer->class = class;
         transfer->is_static = false;
+        transfer->use_if_class_is_used = true;
         map_set_force_new(class->funcs, "_v_transfer", transfer);
 
         // Mark
@@ -167,6 +168,7 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         Func *mark = func_make(b->alc, class->unit, class->scope, name, export_name);
         mark->class = class;
         mark->is_static = false;
+        mark->use_if_class_is_used = true;
         map_set_force_new(class->funcs, "_v_mark", mark);
 
         // Mark GC
@@ -179,6 +181,7 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         Func *mark_shared = func_make(b->alc, class->unit, class->scope, name, export_name);
         mark_shared->class = class;
         mark_shared->is_static = false;
+        mark_shared->use_if_class_is_used = true;
         map_set_force_new(class->funcs, "_v_mark_shared", mark_shared);
 
         // Share
@@ -191,6 +194,7 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         Func *share = func_make(b->alc, class->unit, class->scope, name, export_name);
         share->class = class;
         share->is_static = false;
+        share->use_if_class_is_used = true;
         map_set_force_new(class->funcs, "_v_share", share);
 
         // AST

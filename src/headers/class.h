@@ -39,6 +39,7 @@ struct Class {
     bool allow_math;
     bool is_generic_base;
     bool in_header;
+    bool is_used;
 };
 struct ClassProp {
     Type* type;

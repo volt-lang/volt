@@ -3,6 +3,7 @@
 
 void ir_gen_final(IR* ir) {
     //
+    Unit* u = ir->unit;
     Str* code = ir->code_final;
 
     // Structs & Globals
@@ -10,6 +11,9 @@ void ir_gen_final(IR* ir) {
     str_flat(code, "\n");
     str_append(code, ir->code_global);
     str_flat(code, "\n\n");
+
+    u->ir_start = str_to_chars(u->b->alc, code);
+    str_clear(code);
 
     // Functions
     for (int i = 0; i < ir->funcs->length; i++) {
@@ -27,6 +31,12 @@ void ir_gen_final(IR* ir) {
         }
         //
         str_flat(code, "}\n\n");
+
+        IRFuncIR* irf = al(u->b->alc, sizeof(IRFuncIR));
+        irf->func = func->func;
+        irf->ir = str_to_chars(u->b->alc, code);
+        array_push(u->func_irs, irf);
+        str_clear(code);
     }
 
     // Extern
@@ -40,4 +50,7 @@ void ir_gen_final(IR* ir) {
     }
     str_append(code, ir->code_attr);
     str_flat(code, "\n");
+
+    u->ir_end = str_to_chars(u->b->alc, code);
+    str_clear(code);
 }
